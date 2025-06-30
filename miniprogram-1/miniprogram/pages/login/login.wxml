@@ -1,0 +1,16 @@
+<!--pages/login/login.wxml-->
+<view class="container">
+  <view class="header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <text class="title">智能兰花识别</text>
+    <text class="subtitle">拍照或上传图片，轻松识别兰花品种</text>
+  </view>
+
+  <view class="login-button-wrapper">
+    <button class="login-button" bindtap="handleLogin">微信授权登录</button>
+  </view>
+
+  <view class="footer">
+    <text>技术支持 · 微信云开发</text>
+  </view>
+</view>
