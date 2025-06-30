@@ -3,7 +3,7 @@
   <!-- 顶部导航栏 -->
   <view class="header">
     <view class="header-title">
-      <image class="title-icon" src="/images/orchid-icon.png"></image>
+      <image class="title-icon" src="/images/orchid-logo.png"></image>
       <text class="title-text">兰花识别</text>
     </view>
     <view class="header-actions">
@@ -50,9 +50,9 @@
           <view class="confidence">
             <text class="confidence-text">置信度</text>
             <view class="confidence-bar">
-              <view class="confidence-fill" style="width: {{confidence * 100}}%"></view>
+              <view class="confidence-fill" style="width: {{confidence * 100}}"></view>
             </view>
-            <text class="confidence-value">{{(confidence * 100).toFixed(1)}}%</text>
+            <text class="confidence-value">{{(confidence * 100)}}%</text>
           </view>
         </view>
         
@@ -127,7 +127,7 @@
           <view class="history-info">
             <text class="history-name">{{item.result.name}}</text>
             <text class="history-time">{{item.timestamp}}</text>
-            <text class="history-confidence">置信度: {{(item.result.confidence * 100).toFixed(1)}}%</text>
+            <text class="history-confidence">置信度: {{(item.result.confidence * 100)}}%</text>
           </view>
           <view class="history-actions" catchtap="deleteHistoryItem" data-item="{{item}}">
             <image class="delete-icon" src="/images/icons/delete.png"></image>
