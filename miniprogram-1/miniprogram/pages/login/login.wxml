@@ -1,5 +1,5 @@
 <!--pages/login/login.wxml-->
-<view class="container">
+<view class="container" style="position: relative; left: 0rpx; top: 0rpx">
   <view class="header">
     <view class="logo-wrapper">
       <image class="logo" src="/images/orchid-logo.png" mode="aspectFit" style="position: relative; left: -6rpx; top: -6rpx"></image>

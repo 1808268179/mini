@@ -36,7 +36,7 @@ Page({
         
         // 调用云函数获取openid
         wx.cloud.callFunction({
-          name: 'quickstartFunctions',
+          name: 'login',
           data: {
             type: 'getOpenId'
           },

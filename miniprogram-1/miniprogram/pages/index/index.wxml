@@ -1,139 +1,110 @@
-<!--pages/index/index.wxml-->
-<view class="container">
-  <!-- 顶部导航栏 -->
-  <view class="header">
-    <view class="header-title">
-      <image class="title-icon" src="/images/orchid-logo.png"></image>
-      <text class="title-text">兰花识别</text>
-    </view>
-    <view class="header-actions">
-      <view class="action-btn" bindtap="toggleHistory">
-        <image class="action-icon" src="/images/icons/history.png"></image>
-        <text class="action-text">历史</text>
+<view class="recognition-container">
+  <!-- 顶部装饰背景 -->
+  <view class="header-decoration">
+    <view class="decoration-circle circle-1"></view>
+    <view class="decoration-circle circle-2"></view>
+    <view class="decoration-circle circle-3"></view>
+  </view>
+
+  <!-- 页面标题 -->
+  <view class="page-title">
+    <view class="title-icon">🌺</view>
+    <text class="title-text">AI 兰花识别</text>
+    <text class="subtitle-text">上传图片，智能识别兰花品种</text>
+  </view>
+
+  <!-- 图片上传区域 -->
+  <view class="upload-section">
+    <view class="image-wrapper {{imageSrc ? 'has-image' : ''}} {{isUploading ? 'uploading' : ''}}" bindtap="chooseImage">
+      <image wx:if="{{imageSrc}}" src="{{imageSrc}}" class="preview-image" mode="aspectFill"></image>
+      <view wx:else class="placeholder">
+        <view class="upload-icon">
+          <view class="icon-camera">📷</view>
+        </view>
+        <text class="placeholder-text">点击上传兰花图片</text>
+        <text class="placeholder-subtext">支持相册选择或相机拍摄</text>
+      </view>
+      <view wx:if="{{isUploading}}" class="upload-overlay">
+        <view class="upload-spinner"></view>
+        <text class="upload-text">图片上传中...</text>
       </view>
     </view>
   </view>
 
-  <!-- 用户信息 -->
-  <view class="user-info" wx:if="{{hasUserInfo}}">
-    <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
-    <text class="nickname">你好，{{userInfo.nickName}}</text>
-  </view>
-
-  <!-- 主要内容区域 -->
-  <view class="main-content">
-    <!-- 图片显示区域 -->
-    <view class="image-section" wx:if="{{imageUrl}}">
-      <view class="image-container">
-        <image class="preview-image" src="{{imageUrl}}" mode="aspectFit"></image>
-        <view class="image-actions">
-          <button class="action-button secondary" bindtap="clearResult">
-            <image class="btn-icon" src="/images/icons/close.png"></image>
-            <text>清除</text>
-          </button>
-          <button class="action-button primary" bindtap="reRecognize" disabled="{{isRecognizing}}">
-            <image class="btn-icon" src="/images/icons/refresh.png"></image>
-            <text>重新识别</text>
-          </button>
-        </view>
+  <!-- 识别结果卡片 -->
+  <view class="result-card {{result.name ? 'show' : ''}}" wx:if="{{result.name}}">
+    <view class="card-header">
+      <view class="result-badge">
+        <text class="badge-text">AI识别结果</text>
+      </view>
+      <view class="confidence-chip {{getConfidenceLevel(result.confidence)}}">
+        {{getConfidenceText(result.confidence)}}
       </view>
     </view>
-
-    <!-- 识别结果区域 -->
-    <view class="result-section" wx:if="{{recognitionResult && !isRecognizing}}">
-      <view class="result-card">
-        <view class="result-header">
-          <view class="result-title">
-            <text class="orchid-name">{{recognitionResult.name}}</text>
-            <text class="scientific-name">{{recognitionResult.scientificName}}</text>
-          </view>
-          <view class="confidence">
-            <text class="confidence-text">置信度</text>
-            <view class="confidence-bar">
-              <view class="confidence-fill" style="width: {{confidence * 100}}"></view>
-            </view>
-            <text class="confidence-value">{{(confidence * 100)}}%</text>
-          </view>
+    
+    <view class="result-content">
+      <view class="species-info">
+        <view class="species-icon">🌸</view>
+        <view class="species-details">
+          <text class="species-name">{{result.name}}</text>
+          <text class="species-latin">{{result.latin || 'Orchidaceae Family'}}</text>
         </view>
-        
-        <view class="result-content">
-          <view class="description">
-            <text class="section-title">品种描述</text>
-            <text class="description-text">{{recognitionResult.description}}</text>
-          </view>
-          
-          <view class="characteristics">
-            <text class="section-title">主要特征</text>
-            <view class="characteristic-list">
-              <view class="characteristic-item" wx:for="{{recognitionResult.characteristics}}" wx:key="index">
-                <text class="characteristic-dot">•</text>
-                <text class="characteristic-text">{{item}}</text>
-              </view>
-            </view>
-          </view>
-          
-          <view class="care-tips">
-            <text class="section-title">养护建议</text>
-            <text class="care-text">{{recognitionResult.care}}</text>
+      </view>
+      
+      <view class="confidence-section">
+        <view class="confidence-label">
+          <text class="label-text">识别置信度</text>
+          <!-- <text class="confidence-value">{{(result.confidence * 100).toFixed(1)}}%</text> -->
+          <text class="confidence-value">{{(result.confidence * 100)}}%</text>
+        </view>
+        <view class="progress-container">
+          <view class="progress-track">
+            <view class="progress-fill" style="width: {{result.confidence * 100}}"></view>
           </view>
         </view>
       </view>
-    </view>
 
-    <!-- 加载状态 -->
-    <view class="loading-section" wx:if="{{isRecognizing}}">
-      <view class="loading-animation">
-        <view class="loading-circle"></view>
-        <view class="loading-circle"></view>
-        <view class="loading-circle"></view>
+      <!-- 特征描述 -->
+      <view class="features-section" wx:if="{{result.features && result.features.length}}">
+        <text class="features-title">主要特征</text>
+        <view class="features-list">
+          <view class="feature-item" wx:for="{{result.features}}" wx:key="index">
+            <text class="feature-text">{{item}}</text>
+          </view>
+        </view>
       </view>
-      <text class="loading-text">AI正在识别中...</text>
-      <text class="loading-subtitle">请稍候，正在分析兰花特征</text>
-    </view>
-
-    <!-- 空状态 - 未选择图片 -->
-    <view class="empty-section" wx:if="{{!imageUrl && !isRecognizing}}">
-      <image class="empty-icon" src="/images/empty-orchid.png"></image>
-      <text class="empty-title">开始识别兰花</text>
-      <text class="empty-subtitle">拍照或选择图片，让AI帮你识别兰花品种</text>
     </view>
   </view>
 
-  <!-- 底部操作栏 -->
-  <view class="bottom-actions">
-    <button class="choose-image-btn" bindtap="chooseImage" disabled="{{isRecognizing}}">
-      <image class="btn-icon-large" src="/images/icons/camera-white.png"></image>
-      <text class="btn-text">{{imageUrl ? '重新选择' : '选择图片'}}</text>
+  <!-- 操作按钮区域 -->
+  <view class="actions-section">
+    <button class="primary-btn" bindtap="startRecognition" disabled="{{!imageSrc || isLoading}}" hover-class="primary-btn-active" data-loading="{{isLoading}}">
+      <view wx:if="{{isLoading}}" class="btn-loader"></view>
+      <text class="btn-text">{{isLoading ? '正在识别中...' : '开始AI识别'}}</text>
+    </button>
+    
+    <view class="secondary-actions" wx:if="{{imageSrc}}">
+      <button class="secondary-btn" bindtap="chooseImage" hover-class="secondary-btn-active">
+        <text class="btn-icon">🔄</text>
+        <text class="btn-text">重新选择</text>
+      </button>
+      <button class="secondary-btn" bindtap="clearResult" hover-class="secondary-btn-active" wx:if="{{result.name}}">
+        <text class="btn-icon">🗑️</text>
+        <text class="btn-text">清除结果</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 底部退出按钮 -->
+  <view class="footer-section">
+    <button class="logout-btn" bindtap="logout" hover-class="logout-btn-active">
+      <text class="logout-icon">👋</text>
+      <text class="logout-text">退出登录</text>
     </button>
   </view>
 
-  <!-- 历史记录弹窗 -->
-  <view class="history-modal" wx:if="{{showHistory}}">
-    <view class="modal-mask" bindtap="toggleHistory"></view>
-    <view class="modal-content">
-      <view class="modal-header">
-        <text class="modal-title">识别历史</text>
-        <image class="modal-close" src="/images/icons/close.png" bindtap="toggleHistory"></image>
-      </view>
-      
-      <scroll-view class="history-list" scroll-y="true">
-        <view class="history-empty" wx:if="{{historyList.length === 0}}">
-          <image class="empty-icon-small" src="/images/icons/empty-history.png"></image>
-          <text class="empty-text">暂无识别记录</text>
-        </view>
-        
-        <view class="history-item" wx:for="{{historyList}}" wx:key="id" bindtap="viewHistoryDetail" data-item="{{item}}">
-          <image class="history-image" src="{{item.cloudImageUrl || item.imageUrl}}" mode="aspectFill"></image>
-          <view class="history-info">
-            <text class="history-name">{{item.result.name}}</text>
-            <text class="history-time">{{item.timestamp}}</text>
-            <text class="history-confidence">置信度: {{(item.result.confidence * 100)}}%</text>
-          </view>
-          <view class="history-actions" catchtap="deleteHistoryItem" data-item="{{item}}">
-            <image class="delete-icon" src="/images/icons/delete.png"></image>
-          </view>
-        </view>
-      </scroll-view>
-    </view>
+  <!-- 浮动提示 -->
+  <view class="floating-tips" wx:if="{{!imageSrc && !result.name}}">
+    <text class="tips-text">💡 选择清晰的兰花照片可以提高识别准确率</text>
   </view>
 </view>
