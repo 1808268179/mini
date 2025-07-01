@@ -22,15 +22,36 @@
     "miniprogram": {
       "list": [
         {
-          "name": "pages/index/index",
-          "pathName": "pages/index/index",
+          "name": "pages/profile/profile",
+          "pathName": "pages/profile/profile",
           "query": "",
           "scene": null,
           "launchMode": "default"
         },
         {
+          "name": "pages/home/home",
+          "pathName": "pages/home/home",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
           "name": "pages/login/login",
           "pathName": "pages/login/login",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/login/login",
+          "pathName": "pages/home/home",
+          "query": "",
+          "launchMode": "default",
+          "scene": null
+        },
+        {
+          "name": "pages/index/index",
+          "pathName": "pages/index/index",
           "query": "",
           "launchMode": "default",
           "scene": null

@@ -1,0 +1,123 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+  <!-- 用户信息区域 -->
+  <view class="user-section">
+    <view wx:if="{{hasUserInfo}}" class="user-info">
+      <view class="avatar-wrapper">
+        <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <view class="avatar-border"></view>
+      </view>
+      <view class="user-details">
+        <text class="nickname">{{userInfo.nickName}}</text>
+        <text class="user-id">ID: {{userInfo.nickName ? 'LH' + userInfo.nickName.slice(-4) : 'LH****'}}</text>
+      </view>
+      <view class="logout-btn" bindtap="handleLogout">
+        <image class="logout-icon" src="/images/icons/logout.png"></image>
+      </view>
+    </view>
+    
+    <view wx:else class="login-prompt">
+      <view class="default-avatar">
+        <image src="/images/icons/user-default.png" mode="aspectFit"></image>
+      </view>
+      <view class="login-info">
+        <text class="prompt-text">登录后享受更多功能</text>
+        <view class="login-benefits">
+          <text class="benefit-item">• 保存识别历史</text>
+          <text class="benefit-item">• 收藏兰花品种</text>
+          <text class="benefit-item">• 个性化推荐</text>
+        </view>
+      </view>
+      <button 
+        class="login-btn {{isLoading ? 'loading' : ''}}" 
+        bindtap="handleLogin"
+        disabled="{{isLoading}}"
+      >
+        <view wx:if="{{isLoading}}" class="loading-icon"></view>
+        <text>{{isLoading ? '登录中...' : '立即登录'}}</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 数据统计区域 -->
+  <view wx:if="{{hasUserInfo}}" class="stats-section">
+    <view class="stats-title">我的数据</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalRecognitions}}</text>
+        <text class="stat-label">识别次数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.accurateRecognitions}}</text>
+        <text class="stat-label">准确识别</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.favoriteCount}}</text>
+        <text class="stat-label">收藏数量</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.usageDays}}</text>
+        <text class="stat-label">使用天数</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单区域 -->
+  <view class="menu-section">
+    <view class="menu-group">
+      <view class="menu-title">我的功能</view>
+      <view class="menu-list">
+        <view 
+          class="menu-item" 
+          wx:for="{{menuItems}}" 
+          wx:key="id"
+          data-item="{{item}}"
+          bindtap="handleMenuItemTap"
+        >
+          <view class="menu-left">
+            <image class="menu-icon" src="{{item.icon}}" mode="aspectFit"></image>
+            <text class="menu-text">{{item.title}}</text>
+            <view wx:if="{{item.badge}}" class="badge {{item.badge === 'new' ? 'badge-new' : 'badge-number'}}">
+              {{item.badge}}
+            </view>
+          </view>
+          <view wx:if="{{item.arrow}}" class="menu-arrow">
+            <image src="/images/icons/arrow-right.png" mode="aspectFit"></image>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="menu-group">
+      <view class="menu-title">设置与帮助</view>
+      <view class="menu-list">
+        <view 
+          class="menu-item" 
+          wx:for="{{settingItems}}" 
+          wx:key="id"
+          data-item="{{item}}"
+          bindtap="handleSettingItemTap"
+        >
+          <view class="menu-left">
+            <image class="menu-icon" src="{{item.icon}}" mode="aspectFit"></image>
+            <text class="menu-text">{{item.title}}</text>
+          </view>
+          <view wx:if="{{item.arrow}}" class="menu-arrow">
+            <image src="/images/icons/arrow-right.png" mode="aspectFit"></image>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部信息 -->
+  <view class="footer-section">
+    <view class="app-info">
+      <text class="app-name">智能兰花识别</text>
+      <text class="app-version">版本 1.0.0</text>
+    </view>
+    <view class="copyright">
+      <text class="copyright-text">技术支持 · 微信云开发</text>
+    </view>
+  </view>
+</view>
