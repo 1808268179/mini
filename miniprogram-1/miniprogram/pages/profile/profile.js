@@ -6,6 +6,7 @@ Page({
     userInfo: null,
     hasUserInfo: false,
     canIUseGetUserProfile: false,
+    canIUseNicknameComp: wx.canIUse('input.type.nickname'),
     isLoading: false,
     menuItems: [
       {
@@ -62,7 +63,7 @@ Page({
   },
 
   onLoad() {
-    // 检查是否支持 getUserProfile
+    // 检查是否支持 getUserProfile (已废弃，但保留兼容性检查)
     if (wx.getUserProfile) {
       this.setData({
         canIUseGetUserProfile: true
@@ -120,7 +121,7 @@ Page({
     }
   },
 
-  // 用户登录
+  // 新版用户登录 - 使用头像昵称填写能力
   handleLogin() {
     if (this.data.isLoading) return;
 
@@ -132,60 +133,113 @@ Page({
       title: '正在登录...'
     });
 
-    wx.getUserProfile({
-      desc: '用于完善用户资料',
-      success: (res) => {
-        console.log('获取用户信息成功', res.userInfo);
-        app.globalData.userInfo = res.userInfo;
+    // 先调用云函数获取openid
+    wx.cloud.callFunction({
+      name: 'login',
+      data: {},
+      success: loginRes => {
+        console.log('[云函数] [login] user openid: ', loginRes.result.openid);
+        app.globalData.openid = loginRes.result.openid;
 
-        // 调用云函数获取openid
-        wx.cloud.callFunction({
-          name: 'login',
-          data: {},
-          success: loginRes => {
-            console.log('[云函数] [login] user openid: ', loginRes.result.openid);
-            app.globalData.openid = loginRes.result.openid;
+        // 创建默认用户信息，后续通过头像昵称组件更新
+        const defaultUserInfo = {
+          nickName: '微信用户',
+          avatarUrl: '/images/default-avatar.png' // 需要添加一个默认头像
+        };
+        
+        app.globalData.userInfo = defaultUserInfo;
 
-            wx.hideLoading();
-            this.setData({
-              isLoading: false,
-              userInfo: res.userInfo,
-              hasUserInfo: true
-            });
-
-            wx.showToast({
-              title: '登录成功',
-              icon: 'success'
-            });
-
-            // 重新加载统计数据
-            this.loadUserStats();
-          },
-          fail: err => {
-            wx.hideLoading();
-            this.setData({
-              isLoading: false
-            });
-            wx.showToast({
-              title: '登录失败，请重试',
-              icon: 'none'
-            });
-            console.error('[云函数] [login] 调用失败', err);
-          }
+        wx.hideLoading();
+        this.setData({
+          isLoading: false,
+          userInfo: defaultUserInfo,
+          hasUserInfo: true
         });
+
+        wx.showToast({
+          title: '登录成功，请设置头像昵称',
+          icon: 'success',
+          duration: 2000
+        });
+
+        // 重新加载统计数据
+        this.loadUserStats();
       },
-      fail: (err) => {
+      fail: err => {
         wx.hideLoading();
         this.setData({
           isLoading: false
         });
-        console.log('用户拒绝授权', err);
         wx.showToast({
-          title: '您已取消授权',
+          title: '登录失败，请重试',
           icon: 'none'
         });
+        console.error('[云函数] [login] 调用失败', err);
       }
     });
+  },
+
+  // 选择头像
+  onChooseAvatar(e) {
+    const { avatarUrl } = e.detail;
+    const userInfo = { ...this.data.userInfo, avatarUrl };
+    
+    this.setData({
+      userInfo: userInfo
+    });
+    
+    // 更新全局数据
+    app.globalData.userInfo = userInfo;
+    
+    // 这里可以调用云函数保存用户信息到数据库
+    this.saveUserInfo(userInfo);
+    
+    wx.showToast({
+      title: '头像更新成功',
+      icon: 'success'
+    });
+  },
+
+  // 输入昵称
+  onInputNickname(e) {
+    const nickName = e.detail.value;
+    const userInfo = { ...this.data.userInfo, nickName };
+    
+    this.setData({
+      userInfo: userInfo
+    });
+    
+    // 更新全局数据
+    app.globalData.userInfo = userInfo;
+    
+    // 这里可以调用云函数保存用户信息到数据库
+    this.saveUserInfo(userInfo);
+  },
+
+  // 保存用户信息到云数据库
+  async saveUserInfo(userInfo) {
+    if (!app.globalData.openid) {
+      return;
+    }
+
+    try {
+      // 调用云函数保存用户信息
+      const result = await wx.cloud.callFunction({
+        name: 'quickstartFunctions',
+        data: {
+          type: 'saveUserInfo',
+          data: {
+            openid: app.globalData.openid,
+            userInfo: userInfo,
+            updateTime: new Date()
+          }
+        }
+      });
+      
+      console.log('用户信息保存成功:', result);
+    } catch (error) {
+      console.error('保存用户信息失败:', error);
+    }
   },
 
   // 处理菜单项点击

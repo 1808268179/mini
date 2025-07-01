@@ -11,12 +11,33 @@
     <view wx:if="{{hasUserInfo}}" class="user-info-logged">
       <view class="avatar-section">
         <view class="avatar-glow"></view>
-        <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+        <!-- 使用新的头像选择器 -->
+        <button 
+          class="avatar-button" 
+          open-type="chooseAvatar" 
+          bind:chooseavatar="onChooseAvatar"
+        >
+          <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill"></image>
+          <view class="avatar-edit-hint">
+            <text class="edit-text">点击更换</text>
+          </view>
+        </button>
         <view class="status-dot"></view>
       </view>
       <view class="user-content">
         <view class="user-main">
-          <text class="username">{{userInfo.nickName}}</text>
+          <!-- 使用新的昵称输入框 -->
+          <view class="nickname-wrapper">
+            <input 
+              wx:if="{{canIUseNicknameComp}}"
+              class="nickname-input"
+              type="nickname" 
+              placeholder="请输入昵称"
+              value="{{userInfo.nickName}}"
+              bind:blur="onInputNickname"
+            />
+            <text wx:else class="username">{{userInfo.nickName}}</text>
+          </view>
           <view class="user-badge">
             <text class="badge-text">VIP</text>
           </view>
