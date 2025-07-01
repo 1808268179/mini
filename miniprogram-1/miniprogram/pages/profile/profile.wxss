@@ -464,6 +464,8 @@
 /* 设置菜单 */
 .settings-section {
   margin: 0 30rpx 30rpx;
+  width: calc(100% - 60rpx); /* 确保与其他section保持一致的宽度 */
+  box-sizing: border-box;
 }
 
 .settings-list {
@@ -471,6 +473,8 @@
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.06);
+  width: 100%; /* 确保列表占满容器宽度 */
+  box-sizing: border-box;
 }
 
 .setting-item {
@@ -677,5 +681,10 @@
   
   .stat-item {
     width: 45%;
+  }
+  
+  .settings-section {
+    margin: 0 20rpx 20rpx;
+    width: calc(100% - 40rpx);
   }
 }
