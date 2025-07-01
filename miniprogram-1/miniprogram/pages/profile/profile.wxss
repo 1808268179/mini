@@ -54,6 +54,7 @@
   position: relative;
 }
 
+/* 头像部分优化 */
 .avatar-section {
   position: relative;
   margin-right: 30rpx;
@@ -71,14 +72,57 @@
   animation: pulse 3s ease-in-out infinite;
 }
 
+/* 头像按钮样式 */
+.avatar-button {
+  position: relative;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.avatar-button::after {
+  display: none; /* 移除微信默认按钮样式 */
+}
+
 .avatar {
   width: 120rpx;
   height: 120rpx;
   border-radius: 50%;
   border: 6rpx solid #fff;
   box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.15);
-  position: relative;
-  z-index: 2;
+  display: block;
+}
+
+/* 头像编辑提示 */
+.avatar-edit-hint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50rpx;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  border-radius: 0 0 60rpx 60rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8rpx;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.avatar-button:active .avatar-edit-hint {
+  opacity: 1;
+}
+
+.edit-text {
+  font-size: 18rpx;
+  color: #fff;
+  font-weight: 500;
 }
 
 .status-dot {
@@ -91,8 +135,11 @@
   border-radius: 50%;
   border: 4rpx solid #fff;
   z-index: 3;
+  box-shadow: 0 0 0 4rpx rgba(74, 222, 128, 0.2);
+  animation: statusPulse 2s ease-in-out infinite;
 }
 
+/* 用户内容区域 */
 .user-content {
   flex: 1;
   display: flex;
@@ -105,11 +152,38 @@
   margin-bottom: 12rpx;
 }
 
+/* 昵称输入框优化 */
+.nickname-wrapper {
+  flex: 1;
+  margin-right: 16rpx;
+}
+
+.nickname-input {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #1f2937;
+  border: none;
+  background: transparent;
+  padding: 8rpx 0;
+  border-bottom: 2rpx solid transparent;
+  transition: border-color 0.3s ease;
+  max-width: 200rpx;
+}
+
+.nickname-input:focus {
+  border-bottom-color: #667eea;
+  outline: none;
+}
+
+.nickname-input::placeholder {
+  color: #9ca3af;
+  font-weight: normal;
+}
+
 .username {
   font-size: 36rpx;
   font-weight: bold;
   color: #1f2937;
-  margin-right: 16rpx;
 }
 
 .user-badge {
@@ -117,6 +191,7 @@
   padding: 6rpx 16rpx;
   border-radius: 20rpx;
   box-shadow: 0 4rpx 12rpx rgba(251, 191, 36, 0.3);
+  flex-shrink: 0;
 }
 
 .badge-text {
@@ -131,6 +206,7 @@
   line-height: 1.5;
 }
 
+/* 设置按钮优化 */
 .settings-btn {
   width: 60rpx;
   height: 60rpx;
@@ -140,6 +216,26 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.settings-btn:active::before {
+  width: 100rpx;
+  height: 100rpx;
 }
 
 .settings-btn:active {
@@ -193,12 +289,22 @@
   justify-content: center;
   border: 6rpx solid #fff;
   box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.avatar-placeholder::before {
+  content: '👤';
+  font-size: 48rpx;
+  opacity: 0.5;
 }
 
 .avatar-text {
   font-size: 20rpx;
   color: #6b7280;
   font-weight: bold;
+  position: absolute;
+  bottom: 10rpx;
+  white-space: nowrap;
 }
 
 .guest-content {
@@ -235,6 +341,26 @@
   box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.4);
   transition: all 0.3s ease;
   border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.login-button:active::before {
+  width: 300rpx;
+  height: 300rpx;
 }
 
 .login-button:active {
@@ -263,6 +389,18 @@
   border-radius: 32rpx;
   padding: 40rpx;
   box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4rpx;
+  background: linear-gradient(90deg, #667eea, #764ba2, #10b981, #f59e0b, #06b6d4);
 }
 
 .stats-header {
@@ -285,6 +423,8 @@
 .stats-content {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20rpx;
 }
 
 .stat-item {
@@ -292,6 +432,7 @@
   flex-direction: column;
   align-items: center;
   flex: 1;
+  min-width: 120rpx;
 }
 
 .stat-circle {
@@ -304,6 +445,11 @@
   margin-bottom: 16rpx;
   position: relative;
   overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.stat-circle:active {
+  transform: scale(0.95);
 }
 
 .stat-circle::before {
@@ -346,6 +492,7 @@
   font-size: 22rpx;
   color: #6b7280;
   text-align: center;
+  font-weight: 500;
 }
 
 /* 功能菜单 */
@@ -459,12 +606,18 @@
   font-size: 20rpx;
   color: #9ca3af;
   font-weight: bold;
+  transform: rotate(-45deg);
+  transition: transform 0.3s ease;
+}
+
+.menu-card:active .menu-arrow {
+  transform: rotate(-45deg) translateX(4rpx);
 }
 
 /* 设置菜单 */
 .settings-section {
   margin: 0 30rpx 30rpx;
-  width: calc(100% - 60rpx); /* 确保与其他section保持一致的宽度 */
+  width: calc(100% - 60rpx);
   box-sizing: border-box;
 }
 
@@ -473,7 +626,7 @@
   border-radius: 24rpx;
   overflow: hidden;
   box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.06);
-  width: 100%; /* 确保列表占满容器宽度 */
+  width: 100%;
   box-sizing: border-box;
 }
 
@@ -483,7 +636,20 @@
   justify-content: space-between;
   padding: 32rpx 30rpx;
   border-bottom: 1rpx solid #f3f4f6;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.setting-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.05), transparent);
+  transition: width 0.3s ease;
 }
 
 .setting-item:last-child {
@@ -492,6 +658,10 @@
 
 .setting-item:active {
   background-color: #f9fafb;
+}
+
+.setting-item:active::before {
+  width: 100%;
 }
 
 .setting-left {
@@ -508,11 +678,21 @@
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
+  transition: all 0.3s ease;
+}
+
+.setting-item:active .setting-icon-bg {
+  background: linear-gradient(135deg, #667eea, #764ba2);
 }
 
 .setting-icon {
   width: 32rpx;
   height: 32rpx;
+  transition: filter 0.3s ease;
+}
+
+.setting-item:active .setting-icon {
+  filter: brightness(0) invert(1);
 }
 
 .setting-text {
@@ -533,6 +713,12 @@
   font-size: 32rpx;
   color: #9ca3af;
   font-weight: 300;
+  transition: all 0.3s ease;
+}
+
+.setting-item:active .arrow-text {
+  color: #667eea;
+  transform: translateX(4rpx);
 }
 
 /* 底部信息 */
@@ -638,6 +824,15 @@
   }
 }
 
+@keyframes statusPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4rpx rgba(74, 222, 128, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8rpx rgba(74, 222, 128, 0.1);
+  }
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -665,6 +860,19 @@
     padding: 30rpx;
   }
   
+  .avatar-glow {
+    width: 130rpx;
+    height: 130rpx;
+    top: -10rpx;
+    left: -10rpx;
+  }
+  
+  .avatar-button,
+  .avatar {
+    width: 100rpx;
+    height: 100rpx;
+  }
+  
   .menu-grid {
     gap: 15rpx;
   }
@@ -683,8 +891,22 @@
     width: 45%;
   }
   
+  .stat-circle {
+    width: 80rpx;
+    height: 80rpx;
+  }
+  
+  .stat-number {
+    font-size: 24rpx;
+  }
+  
   .settings-section {
     margin: 0 20rpx 20rpx;
     width: calc(100% - 40rpx);
+  }
+  
+  .nickname-input {
+    font-size: 32rpx;
+    max-width: 150rpx;
   }
 }
