@@ -4,6 +4,7 @@ cloud.init({
 });
 
 const db = cloud.database();
+
 // 获取openid
 const getOpenId = async () => {
   // 获取基础信息
@@ -157,14 +158,97 @@ const deleteRecord = async (event) => {
   }
 };
 
-// const getOpenId = require('./getOpenId/index');
-// const getMiniProgramCode = require('./getMiniProgramCode/index');
-// const createCollection = require('./createCollection/index');
-// const selectRecord = require('./selectRecord/index');
-// const updateRecord = require('./updateRecord/index');
-// const sumRecord = require('./sumRecord/index');
-// const fetchGoodsList = require('./fetchGoodsList/index');
-// const genMpQrcode = require('./genMpQrcode/index');
+// 保存用户信息
+const saveUserInfo = async (event) => {
+  try {
+    const { openid, userInfo, updateTime } = event.data;
+    
+    if (!openid) {
+      return {
+        success: false,
+        errMsg: 'openid is required'
+      };
+    }
+
+    // 先检查用户是否已存在
+    const existUser = await db.collection('users').where({
+      openid: openid
+    }).get();
+
+    if (existUser.data.length > 0) {
+      // 用户已存在，更新用户信息
+      await db.collection('users').where({
+        openid: openid
+      }).update({
+        data: {
+          userInfo: userInfo,
+          updateTime: updateTime
+        }
+      });
+    } else {
+      // 用户不存在，创建新用户记录
+      await db.collection('users').add({
+        data: {
+          openid: openid,
+          userInfo: userInfo,
+          createTime: updateTime,
+          updateTime: updateTime
+        }
+      });
+    }
+
+    return {
+      success: true,
+      data: {
+        openid: openid,
+        userInfo: userInfo
+      }
+    };
+  } catch (e) {
+    console.error('保存用户信息失败:', e);
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
+// 获取用户信息
+const getUserInfo = async (event) => {
+  try {
+    const { openid } = event.data;
+    
+    if (!openid) {
+      return {
+        success: false,
+        errMsg: 'openid is required'
+      };
+    }
+
+    const result = await db.collection('users').where({
+      openid: openid
+    }).get();
+
+    if (result.data.length > 0) {
+      return {
+        success: true,
+        data: result.data[0]
+      };
+    } else {
+      return {
+        success: false,
+        errMsg: 'User not found'
+      };
+    }
+  } catch (e) {
+    console.error('获取用户信息失败:', e);
+    return {
+      success: false,
+      errMsg: e.message || e
+    };
+  }
+};
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   switch (event.type) {
@@ -182,5 +266,14 @@ exports.main = async (event, context) => {
       return await insertRecord(event);
     case "deleteRecord":
       return await deleteRecord(event);
+    case "saveUserInfo":
+      return await saveUserInfo(event);
+    case "getUserInfo":
+      return await getUserInfo(event);
+    default:
+      return {
+        success: false,
+        errMsg: `Unknown function type: ${event.type}`
+      };
   }
 };
