@@ -10,7 +10,7 @@
   <view class="user-card">
     <view wx:if="{{hasUserInfo}}" class="user-info-logged">
       <view class="avatar-section">
-        <view class="avatar-glow"></view>
+        <!-- <view class="avatar-glow"></view> -->
         <!-- 使用新的头像选择器 -->
         <button 
           class="avatar-button" 
