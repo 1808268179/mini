@@ -258,7 +258,7 @@
 
 /* 数据统计卡片 */
 .stats-card {
-  margin: 0 30rpx 30rpx;
+  margin: 0 30rpx 10rpx;
   background: #fff;
   border-radius: 32rpx;
   padding: 40rpx;
