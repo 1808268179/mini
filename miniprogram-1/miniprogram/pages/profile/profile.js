@@ -81,7 +81,7 @@ Page({
   },
 
   // 加载用户信息
-  loadUserInfo() {
+  async loadUserInfo() {
     const userInfo = app.globalData.userInfo;
     const openid = app.globalData.openid;
     
@@ -90,6 +90,39 @@ Page({
         userInfo: userInfo,
         hasUserInfo: true
       });
+    } else if (openid && !userInfo) {
+      // 有openid但没有userInfo，尝试从云端加载
+      try {
+        const result = await wx.cloud.callFunction({
+          name: 'quickstartFunctions',
+          data: {
+            type: 'getUserInfo',
+            data: {
+              openid: openid
+            }
+          }
+        });
+
+        if (result.result && result.result.success && result.result.data) {
+          const loadedUserInfo = result.result.data.userInfo;
+          app.globalData.userInfo = loadedUserInfo;
+          this.setData({
+            userInfo: loadedUserInfo,
+            hasUserInfo: true
+          });
+          console.log('从云端加载用户信息成功:', loadedUserInfo);
+        } else {
+          // 云端没有用户信息，显示默认状态
+          this.setData({
+            hasUserInfo: false
+          });
+        }
+      } catch (error) {
+        console.error('从云端加载用户信息失败:', error);
+        this.setData({
+          hasUserInfo: false
+        });
+      }
     } else {
       this.setData({
         hasUserInfo: false
@@ -122,7 +155,7 @@ Page({
   },
 
   // 新版用户登录 - 使用头像昵称填写能力
-  handleLogin() {
+  async handleLogin() {
     if (this.data.isLoading) return;
 
     this.setData({
@@ -133,50 +166,80 @@ Page({
       title: '正在登录...'
     });
 
-    // 先调用云函数获取openid
-    wx.cloud.callFunction({
-      name: 'login',
-      data: {},
-      success: loginRes => {
-        console.log('[云函数] [login] user openid: ', loginRes.result.openid);
-        app.globalData.openid = loginRes.result.openid;
+    try {
+      // 先调用云函数获取openid
+      const loginRes = await wx.cloud.callFunction({
+        name: 'login',
+        data: {}
+      });
 
-        // 创建默认用户信息，后续通过头像昵称组件更新
-        const defaultUserInfo = {
+      console.log('[云函数] [login] user openid: ', loginRes.result.openid);
+      const openid = loginRes.result.openid;
+      app.globalData.openid = openid;
+
+      // 尝试从云端获取已保存的用户信息
+      let userInfo = null;
+      try {
+        const result = await wx.cloud.callFunction({
+          name: 'quickstartFunctions',
+          data: {
+            type: 'getUserInfo',
+            data: {
+              openid: openid
+            }
+          }
+        });
+
+        if (result.result && result.result.success && result.result.data) {
+          userInfo = result.result.data.userInfo;
+          console.log('找到已保存的用户信息:', userInfo);
+        }
+      } catch (error) {
+        console.log('获取已保存用户信息失败:', error);
+      }
+
+      // 如果没有找到已保存的用户信息，使用默认信息
+      if (!userInfo) {
+        userInfo = {
           nickName: '微信用户',
           avatarUrl: '/images/default-avatar.png' // 需要添加一个默认头像
         };
-        
-        app.globalData.userInfo = defaultUserInfo;
-
-        wx.hideLoading();
-        this.setData({
-          isLoading: false,
-          userInfo: defaultUserInfo,
-          hasUserInfo: true
-        });
-
-        wx.showToast({
-          title: '登录成功，请设置头像昵称',
-          icon: 'success',
-          duration: 2000
-        });
-
-        // 重新加载统计数据
-        this.loadUserStats();
-      },
-      fail: err => {
-        wx.hideLoading();
-        this.setData({
-          isLoading: false
-        });
-        wx.showToast({
-          title: '登录失败，请重试',
-          icon: 'none'
-        });
-        console.error('[云函数] [login] 调用失败', err);
+        console.log('使用默认用户信息');
       }
-    });
+      
+      app.globalData.userInfo = userInfo;
+
+      wx.hideLoading();
+      this.setData({
+        isLoading: false,
+        userInfo: userInfo,
+        hasUserInfo: true
+      });
+
+      const message = userInfo.nickName === '微信用户' ? 
+        '登录成功，请设置头像昵称' : 
+        '欢迎回来！';
+      
+      wx.showToast({
+        title: message,
+        icon: 'success',
+        duration: 2000
+      });
+
+      // 重新加载统计数据
+      this.loadUserStats();
+
+    } catch (error) {
+      wx.hideLoading();
+      this.setData({
+        isLoading: false
+      });
+      wx.showToast({
+        title: '登录失败，请重试',
+        icon: 'none'
+      });
+      console.error('[云函数] [login] 调用失败', error);
+    }
   },
 
   // 选择头像
@@ -189,9 +252,9 @@ Page({
     });
     
     // 更新全局数据
-    app.globalData.userInfo = userInfo;
+    app.updateUserInfo(userInfo);
     
-    // 这里可以调用云函数保存用户信息到数据库
+    // 保存用户信息到云端
     this.saveUserInfo(userInfo);
     
     wx.showToast({
@@ -203,22 +266,32 @@ Page({
   // 输入昵称
   onInputNickname(e) {
     const nickName = e.detail.value;
-    const userInfo = { ...this.data.userInfo, nickName };
+    if (!nickName.trim()) {
+      return; // 空昵称不保存
+    }
+    
+    const userInfo = { ...this.data.userInfo, nickName: nickName.trim() };
     
     this.setData({
       userInfo: userInfo
     });
     
     // 更新全局数据
-    app.globalData.userInfo = userInfo;
+    app.updateUserInfo(userInfo);
     
-    // 这里可以调用云函数保存用户信息到数据库
+    // 保存用户信息到云端
     this.saveUserInfo(userInfo);
+    
+    wx.showToast({
+      title: '昵称更新成功',
+      icon: 'success'
+    });
   },
 
   // 保存用户信息到云数据库
   async saveUserInfo(userInfo) {
     if (!app.globalData.openid) {
+      console.error('保存用户信息失败: 缺少openid');
       return;
     }
 
@@ -236,9 +309,21 @@ Page({
         }
       });
       
-      console.log('用户信息保存成功:', result);
+      if (result.result && result.result.success) {
+        console.log('用户信息保存成功:', result.result);
+      } else {
+        console.error('用户信息保存失败:', result.result);
+        wx.showToast({
+          title: '保存失败，请重试',
+          icon: 'none'
+        });
+      }
     } catch (error) {
       console.error('保存用户信息失败:', error);
+      wx.showToast({
+        title: '保存失败，请重试',
+        icon: 'none'
+      });
     }
   },
 
@@ -324,8 +409,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           // 清除全局数据
-          app.globalData.userInfo = null;
-          app.globalData.openid = null;
+          app.clearUserInfo();
           
           // 更新页面状态
           this.setData({
