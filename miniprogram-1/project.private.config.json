@@ -25,13 +25,6 @@
           "name": "pages/profile/profile",
           "pathName": "pages/profile/profile",
           "query": "",
-          "scene": null,
-          "launchMode": "default"
-        },
-        {
-          "name": "pages/home/home",
-          "pathName": "pages/home/home",
-          "query": "",
           "launchMode": "default",
           "scene": null
         },

@@ -8,6 +8,7 @@ Page({
     canIUseGetUserProfile: false,
     canIUseNicknameComp: wx.canIUse('input.type.nickname'),
     isLoading: false,
+    isUpdatingAvatar: false,
     menuItems: [
       {
         id: 'history',
@@ -179,6 +180,8 @@ Page({
 
       // 尝试从云端获取已保存的用户信息
       let userInfo = null;
+      let userExists = false;
+      
       try {
         const result = await wx.cloud.callFunction({
           name: 'quickstartFunctions',
@@ -192,19 +195,27 @@ Page({
 
         if (result.result && result.result.success && result.result.data) {
           userInfo = result.result.data.userInfo;
+          userExists = true;
           console.log('找到已保存的用户信息:', userInfo);
         }
       } catch (error) {
         console.log('获取已保存用户信息失败:', error);
       }
 
-      // 如果没有找到已保存的用户信息，使用默认信息
+      // 如果没有找到已保存的用户信息，创建默认信息并保存到云端
       if (!userInfo) {
         userInfo = {
           nickName: '微信用户',
           avatarUrl: '/images/default-avatar.png' // 需要添加一个默认头像
         };
-        console.log('使用默认用户信息');
+        
+        // 保存默认用户信息到云端
+        try {
+          await this.saveUserInfoToCloud(openid, userInfo);
+          console.log('默认用户信息已保存到云端');
+        } catch (error) {
+          console.error('保存默认用户信息失败:', error);
+        }
       }
       
       app.globalData.userInfo = userInfo;
@@ -216,7 +227,7 @@ Page({
         hasUserInfo: true
       });
 
-      const message = userInfo.nickName === '微信用户' ? 
+      const message = !userExists ? 
         '登录成功，请设置头像昵称' : 
         '欢迎回来！';
       
@@ -242,24 +253,122 @@ Page({
     }
   },
 
-  // 选择头像
-  onChooseAvatar(e) {
-    const { avatarUrl } = e.detail;
-    const userInfo = { ...this.data.userInfo, avatarUrl };
+  // 选择头像 - 使用新的方法
+  async chooseAvatar() {
+    if (this.data.isUpdatingAvatar) return;
     
     this.setData({
-      userInfo: userInfo
+      isUpdatingAvatar: true
     });
-    
-    // 更新全局数据
-    app.updateUserInfo(userInfo);
-    
-    // 保存用户信息到云端
-    this.saveUserInfo(userInfo);
-    
-    wx.showToast({
-      title: '头像更新成功',
-      icon: 'success'
+
+    try {
+      // 选择图片
+      const res = await wx.chooseImage({
+        count: 1,
+        sizeType: ['compressed'], // 压缩图片
+        sourceType: ['album', 'camera']
+      });
+
+      const tempFilePath = res.tempFilePaths[0];
+      
+      wx.showLoading({
+        title: '更新头像中...'
+      });
+
+      // 上传图片到云存储
+      const cloudPath = `avatars/${app.globalData.openid}_${Date.now()}.jpg`;
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath: cloudPath,
+        filePath: tempFilePath
+      });
+
+      // 获取云存储文件的下载链接
+      const fileRes = await wx.cloud.getTempFileURL({
+        fileList: [uploadRes.fileID]
+      });
+
+      const avatarUrl = fileRes.fileList[0].tempFileURL;
+      
+      // 更新用户信息
+      const userInfo = { ...this.data.userInfo, avatarUrl };
+      
+      this.setData({
+        userInfo: userInfo,
+        isUpdatingAvatar: false
+      });
+      
+      // 更新全局数据
+      app.globalData.userInfo = userInfo;
+      
+      // 保存用户信息到云端
+      await this.saveUserInfoToCloud(app.globalData.openid, userInfo);
+      
+      wx.hideLoading();
+      wx.showToast({
+        title: '头像更新成功',
+        icon: 'success'
+      });
+
+    } catch (error) {
+      wx.hideLoading();
+      this.setData({
+        isUpdatingAvatar: false
+      });
+      wx.showToast({
+        title: '头像更新失败',
+        icon: 'none'
+      });
+      console.error('更新头像失败:', error);
+    }
+  },
+
+  // 选择头像的回调（兼容旧版本）
+  onChooseAvatar(e) {
+    const { avatarUrl } = e.detail; // 这是临时路径
+
+    wx.showLoading({
+      title: '正在上传...',
+    });
+
+    // 1. 定义云存储路径
+    const cloudPath = `avatars/${app.globalData.openid}-${Date.now()}.png`;
+
+    // 2. 将图片上传到云存储
+    wx.cloud.uploadFile({
+      cloudPath: cloudPath, // 上传至云端的路径
+      filePath: avatarUrl,  // 小程序临时文件路径
+      success: res => {
+        // 上传成功后，res.fileID 是文件的永久访问ID
+        console.log('上传成功', res.fileID);
+        
+        // 3. 将永久的 fileID 更新到 userInfo 对象中
+        const userInfo = { ...this.data.userInfo, avatarUrl: res.fileID };
+        
+        this.setData({
+          userInfo: userInfo
+        });
+        
+        // 更新全局数据
+        app.updateUserInfo(userInfo);
+        
+        // 4. 将包含永久 fileID 的 userInfo 保存到云数据库
+        this.saveUserInfo(userInfo);
+        
+        wx.showToast({
+          title: '头像更新成功',
+          icon: 'success'
+        });
+      },
+      fail: err => {
+        wx.showToast({
+          title: '上传失败',
+          icon: 'error'
+        });
+        console.error('上传失败', err);
+      },
+      complete: () => {
+        wx.hideLoading();
+      }
     });
   },
 
@@ -277,10 +386,10 @@ Page({
     });
     
     // 更新全局数据
-    app.updateUserInfo(userInfo);
+    app.globalData.userInfo = userInfo;
     
     // 保存用户信息到云端
-    this.saveUserInfo(userInfo);
+    this.saveUserInfoToCloud(app.globalData.openid, userInfo);
     
     wx.showToast({
       title: '昵称更新成功',
@@ -289,8 +398,8 @@ Page({
   },
 
   // 保存用户信息到云数据库
-  async saveUserInfo(userInfo) {
-    if (!app.globalData.openid) {
+  async saveUserInfoToCloud(openid, userInfo) {
+    if (!openid) {
       console.error('保存用户信息失败: 缺少openid');
       return;
     }
@@ -302,7 +411,7 @@ Page({
         data: {
           type: 'saveUserInfo',
           data: {
-            openid: app.globalData.openid,
+            openid: openid,
             userInfo: userInfo,
             updateTime: new Date()
           }
@@ -313,13 +422,19 @@ Page({
         console.log('用户信息保存成功:', result.result);
       } else {
         console.error('用户信息保存失败:', result.result);
-        wx.showToast({
-          title: '保存失败，请重试',
-          icon: 'none'
-        });
+        throw new Error(result.result.errMsg || '保存失败');
       }
     } catch (error) {
       console.error('保存用户信息失败:', error);
+      throw error;
+    }
+  },
+
+  // 保存用户信息到云数据库（兼容旧版本调用）
+  async saveUserInfo(userInfo) {
+    try {
+      await this.saveUserInfoToCloud(app.globalData.openid, userInfo);
+    } catch (error) {
       wx.showToast({
         title: '保存失败，请重试',
         icon: 'none'
@@ -409,7 +524,8 @@ Page({
       success: (res) => {
         if (res.confirm) {
           // 清除全局数据
-          app.clearUserInfo();
+          app.globalData.userInfo = null;
+          app.globalData.openid = null;
           
           // 更新页面状态
           this.setData({
