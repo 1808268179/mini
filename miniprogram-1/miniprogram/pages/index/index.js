@@ -82,7 +82,7 @@ Page({
                   result: {
                     name: topResult.name,
                     latin: '',
-                    confidence: topResult.confidence,
+                    confidence: topResult.confidence.toFixed(4),
                     features: []
                   }
                 });
@@ -134,19 +134,7 @@ Page({
     });
   },
 
-  logout() {
-    wx.showModal({
-      title: '确认退出',
-      content: '确定要退出当前账户吗？',
-      success: (res) => {
-        if (res.confirm) {
-          wx.reLaunch({
-            url: '/pages/Login/Login'
-          });
-        }
-      }
-    });
-  },
+  // 删除了 logout 函数
 
   getConfidenceLevel(confidence) {
     if (confidence >= 0.9) return 'high';
